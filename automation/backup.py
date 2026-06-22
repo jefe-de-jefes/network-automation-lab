@@ -1,6 +1,5 @@
 import paramiko
-from datetime import datetime
-import os
+import psycopg2
 
 ROUTERS = [
     {"name": "R1", "host": "192.168.99.1"},
@@ -10,7 +9,14 @@ ROUTERS = [
 
 USERNAME = "root"
 KEY_PATH = "/home/jefe_de_jefes/network-automation-lab/.ssh/frr_automation"
-BACKUP_DIR = "/home/jefe_de_jefes/network-automation-lab/backups"
+
+DB_CONFIG = {
+    "host": "localhost",
+    "port": 5432,
+    "dbname": "network_lab",
+    "user": "netadmin",
+    "password": "labpassword123",
+}
 
 def get_config(host, username, key_path):
     private_key = paramiko.Ed25519Key.from_private_key_file(key_path)
@@ -24,34 +30,39 @@ def get_config(host, username, key_path):
 
     return output
 
-def save_backup(name, config_text):
-    os.makedirs(BACKUP_DIR, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    filename = f"{BACKUP_DIR}/{name}_{timestamp}.conf"
+def save_to_db(router_name, config_text):
+    conn = psycopg2.connect(**DB_CONFIG)
+    cursor = conn.cursor()
 
-    with open(filename, "w") as f:
-        f.write(config_text)
+    cursor.execute(
+        "INSERT INTO config_backups (router_name, config_text) VALUES (%s, %s)",
+        (router_name, config_text)
+    )
 
-    print(f"Guardado: {filename}")
+    conn.commit()
+    cursor.close()
+    conn.close()
 
 def main():
     fallos = []
+
     for router in ROUTERS:
         print(f"=== Conectando a {router['name']} ({router['host']}) ===")
         try:
             config_text = get_config(router["host"], USERNAME, KEY_PATH)
-            save_backup(router["name"], config_text)
+            save_to_db(router["name"], config_text)
+            print(f"    Guardado en base de datos.")
         except Exception as e:
-            print(f"ERROR al conectar con {router['name']}: {e}")
+            print(f"    ERROR: {e}")
             fallos.append((router["name"], str(e)))
 
-    print("\n---Resumen---")
+    print("\n--- Resumen ---")
     if fallos:
-        print("=== Fallos ===")
+        print("Fallos:")
         for nombre, error in fallos:
-            print(f"{nombre}: {error}")
+            print(f"  {nombre}: {error}")
     else:
-        print("Routers respaldados correctamente")
+        print("Todos los routers respaldados correctamente.")
 
 if __name__ == "__main__":
     main()
