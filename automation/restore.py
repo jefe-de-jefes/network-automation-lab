@@ -7,7 +7,7 @@ ROUTERS = [
 ]
 
 USERNAME = "root"
-KEY_PATH = "/home/jefe_de_jefes/network-automation-lab/.ssh/frr_automation"
+KEY_PATH = "/home/jefe_de_jefes/works/network-automation-lab/.ssh/frr_automation"
 REMOTE_PATH = "/etc/frr/frr.conf"
 
 def push_config(host, username, key_path, local_config):
