@@ -1,5 +1,4 @@
-API_KEY
+google-genai
 paramiko
 psycopg2-binary
 python-dotenv
-EOF

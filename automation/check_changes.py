@@ -1,19 +1,13 @@
 import psycopg2
+import sys
+from pathlib import Path
 
-DB_CONFIG = {
-    "host": "localhost",
-    "port": 5432,
-    "dbname": "network_lab",
-    "user": "netadmin",
-    "password": "labpassword123",
-}
-
-ROUTER_NAMES = ["R1", "R2", "R3"]
+sys.path.append(str(Path(__file__).parent.parent))
+from config import DB_CONFIG, ROUTERS
 
 def get_last_two_backups(router_name):
     conn = psycopg2.connect(**DB_CONFIG)
     cursor = conn.cursor()
-
     cursor.execute(
         """
         SELECT config_text, created_at
@@ -24,15 +18,14 @@ def get_last_two_backups(router_name):
         """,
         (router_name,)
     )
-
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
-
     return rows
 
 def main():
-    for name in ROUTER_NAMES:
+    for r in ROUTERS:
+        name = r["name"]
         print(f"=== {name} ===")
         rows = get_last_two_backups(name)
 

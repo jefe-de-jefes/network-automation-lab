@@ -1,17 +1,17 @@
 import paramiko
 import psycopg2
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent.parent))
 from config import SSH_USERNAME, SSH_KEY_PATH, ROUTERS, DB_CONFIG
 
-
 def _ssh_connect(host):
-    """Abre una conexion SSH a un router y la devuelve."""
     private_key = paramiko.Ed25519Key.from_private_key_file(SSH_KEY_PATH)
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(hostname=host, username=SSH_USERNAME, pkey=private_key, timeout=5)
     return client
-
-
 def get_router_status(router_name):
     """
     Conecta al router por SSH y obtiene:
